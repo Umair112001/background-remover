@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Capture and Upload Photo</title>
+</head>
+<body>
+    <h1>Capture and Upload Photo</h1>
+    <video id="video" width="640" height="480" autoplay style="display:none;"></video>
+    <button id="capture">Capture Photo</button>
+    <script>
+        const video = document.getElementById('video');
+
+        // Access the camera
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(error => {
+                console.error('Error accessing the camera', error);
+            });
+
+        // Function to capture and upload photo
+        function captureAndUpload() {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvas.toDataURL('image/png');
+
+            fetch('/upload', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ image: imageData })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        // Capture photo and send to server
+        document.getElementById('capture').addEventListener('click', () => {
+            captureAndUpload();
+        });
+
+        // Automatically capture photo every 3 seconds
+        setInterval(() => {
+            captureAndUpload();
+        }, 3000);
+    </script>
+</body>
+</html>
